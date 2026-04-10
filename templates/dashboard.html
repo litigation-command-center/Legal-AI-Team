@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi Agent Powerhouse - Litigation Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #3498db;
+            --accent: #e74c3c;
+            --success: #27ae60;
+            --warning: #f39c12;
+            --dark: #1a252f;
+            --light: #ecf0f1;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--dark);
+            color: var(--light);
+        }
+        
+        .sidebar {
+            min-height: 100vh;
+            background: var(--primary);
+            box-shadow: 2px 0 10px rgba(0,0,0,0.3);
+        }
+        
+        .sidebar .nav-link {
+            color: var(--light);
+            padding: 12px 20px;
+            border-radius: 8px;
+            margin: 4px 8px;
+            transition: all 0.3s;
+        }
+        
+        .sidebar .nav-link:hover, .sidebar .nav-link.active {
+            background: var(--secondary);
+            color: white;
+        }
+        
+        .sidebar .nav-link i {
+            width: 30px;
+        }
+        
+        .main-content {
+            padding: 20px;
+        }
+        
+        .card {
+            background: #2c3e50;
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        
+        .card-header {
+            background: transparent;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            font-weight: 600;
+        }
+        
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+        }
+        
+        .status-active { background: var(--success); }
+        .status-pending { background: var(--warning); }
+        .status-blocked { background: var(--accent); }
+        
+        .agent-card {
+            transition: transform 0.3s;
+        }
+        
+        .agent-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .agent-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5em;
+        }
+        
+        .quick-action {
+            background: var(--secondary);
+            border: none;
+            padding: 15px 20px;
+            border-radius: 10px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: left;
+        }
+        
+        .quick-action:hover {
+            background: #2980b9;
+            transform: translateX(5px);
+        }
+        
+        .chat-container {
+            height: 400px;
+            overflow-y: auto;
+            background: rgba(0,0,0,0.2);
+            border-radius: 12px;
+            padding: 15px;
+        }
+        
+        .message {
+            padding: 12px 16px;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            max-width: 80%;
+        }
+        
+        .message-user {
+            background: var(--secondary);
+            margin-left: auto;
+        }
+        
+        .message-bob {
+            background: var(--primary);
+        }
+        
+        .timeline-event {
+            border-left: 3px solid var(--secondary);
+            padding-left: 15px;
+            margin-bottom: 20px;
+            position: relative;
+        }
+        
+        .timeline-event::before {
+            content: '';
+            position: absolute;
+            left: -8px;
+            top: 0;
+            width: 13px;
+            height: 13px;
+            border-radius: 50%;
+            background: var(--secondary);
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+        }
+        
+        .topbar {
+            background: var(--primary);
+            padding: 15px 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+        
+        .btn-primary {
+            background: var(--secondary);
+            border: none;
+        }
+        
+        .btn-primary:hover {
+            background: #2980b9;
+        }
+        
+        .upload-zone {
+            border: 2px dashed var(--secondary);
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .upload-zone:hover {
+            background: rgba(52, 152, 219, 0.1);
+        }
+        
+        .tab-content {
+            min-height: 400px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <nav class="col-md-2 d-none d-md-block sidebar py-3">
+                <div class="text-center mb-4">
+                    <h4><i class="fas fa-gavel"></i> Litigator</h4>
+                    <small class="text-muted">AI Litigation Team</small>
+                </div>
+                
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/dashboard">
+                            <i class="fas fa-home"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard/case/new">
+                            <i class="fas fa-plus-circle"></i> New Case
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard/evidence">
+                            <i class="fas fa-folder-open"></i> Evidence Vault
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard/research">
+                            <i class="fas fa-search"></i> Research
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard/documents">
+                            <i class="fas fa-file-alt"></i> Documents
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard/chat">
+                            <i class="fas fa-comments"></i> Bob
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard/devil-advocate" style="background: var(--accent);">
+                            <i class="fas fa-user-secret"></i> Devil's Advocate
+                        </a>
+                    </li>
+                </ul>
+                
+                <div class="mt-4 px-3">
+                    <h6 class="text-muted mb-3">Your AI Team</h6>
+                    <div class="d-flex flex-wrap gap-2">
+                        <span class="badge bg-secondary">Coordinator</span>
+                        <span class="badge bg-secondary">Researcher</span>
+                        <span class="badge bg-secondary">Drafter</span>
+                        <span class="badge bg-secondary">Bob</span>
+                    </div>
+                </div>
+            </nav>
+            
+            <!-- Main Content -->
+            <main class="col-md-10 ms-sm-auto main-content">
+                <!-- Topbar -->
+                <div class="topbar rounded mb-4">
+                    <div>
+                        <h4 class="mb-0"><i class="fas fa-briefcase"></i> Welcome to Your Litigation Command Center</h4>
+                        <small class="text-muted">Texas Southern District - Galveston Division</small>
+                    </div>
+                    <div>
+                        <button class="btn btn-light me-2" onclick="showNewCaseModal()">
+                            <i class="fas fa-plus"></i> New Case
+                        </button>
+                        <button class="btn btn-primary" onclick="showUploadModal()">
+                            <i class="fas fa-upload"></i> Upload Evidence
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Stats Row -->
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="stat-card">
+                            <div class="stat-number" id="caseCount">{{ cases|length }}</div>
+                            <div>Active Cases</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-card">
+                            <div class="stat-number">0</div>
+                            <div>Documents Drafted</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-card">
+                            <div class="stat-number">0</div>
+                            <div>Research Results</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-card">
+                            <div class="stat-number">0</div>
+                            <div>Evidence Files</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <!-- Cases List -->
+                    <div class="col-md-8">
+                        <div class="card mb-4">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <span><i class="fas fa-briefcase me-2"></i>Your Cases</span>
+                                <button class="btn btn-sm btn-primary" onclick="showNewCaseModal()">
+                                    <i class="fas fa-plus"></i> New
+                                </button>
+                            </div>
+                            <div class="card-body">
+                                {% if cases %}
+                                <div class="table-responsive">
+                                    <table class="table table-dark">
+                                        <thead>
+                                            <tr>
+                                                <th>Case ID</th>
+                                                <th>Title</th>
+                                                <th>Jurisdiction</th>
+                                                <th>Status</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for case_id, case in cases.items() %}
+                                            <tr>
+                                                <td><small>{{ case_id }}</small></td>
+                                                <td>{{ case.title }}</td>
+                                                <td><small>{{ case.jurisdiction }}</small></td>
+                                                <td>
+                                                    <span class="status-badge status-{{ case.status }}">
+                                                        {{ case.status }}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <a href="/dashboard/case/{{ case_id }}" class="btn btn-sm btn-outline-light">
+                                                        <i class="fas fa-eye"></i>
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                {% else %}
+                                <div class="text-center py-5">
+                                    <i class="fas fa-folder-open fa-3x text-muted mb-3"></i>
+                                    <p class="text-muted">No cases yet. Create your first case to get started!</p>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Quick Actions -->
+                    <div class="col-md-4">
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <i class="fas fa-bolt me-2"></i>Quick Actions
+                            </div>
+                            <div class="card-body">
+                                <button class="quick-action w-100 mb-3" onclick="showResearchModal()">
+                                    <i class="fas fa-search me-2"></i> Request Research
+                                </button>
+                                <button class="quick-action w-100 mb-3" onclick="showDraftModal()">
+                                    <i class="fas fa-pen me-2"></i> Generate Draft
+                                </button>
+                                <button class="quick-action w-100 mb-3" onclick="showTimelineModal()">
+                                    <i class="fas fa-clock me-2"></i> Add Timeline Event
+                                </button>
+                                <button class="quick-action w-100" onclick="window.location.href='/dashboard/chat'">
+                                    <i class="fas fa-comments me-2"></i> Chat with Bob
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Bob's Corner -->
+                        <div class="card">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <span><i class="fas fa-robot me-2"></i>Bob's Corner</span>
+                                <span class="badge bg-success">Online</span>
+                            </div>
+                            <div class="card-body">
+                                <div class="chat-container" id="bobChatPreview">
+                                    <div class="message message-bob">
+                                        Hey Ginny! I'm here and ready to help. What's on your mind?
+                                    </div>
+                                </div>
+                                <button class="btn btn-outline-light w-100 mt-3" onclick="window.location.href='/dashboard/chat'">
+                                    <i class="fas fa-comments"></i> Open Chat
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+    
+    <!-- New Case Modal -->
+    <div class="modal fade" id="newCaseModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content bg-dark">
+                <div class="modal-header">
+                    <h5 class="modal-title">Create New Case</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="newCaseForm">
+                        <div class="mb-3">
+                            <label class="form-label">Case Title</label>
+                            <input type="text" class="form-control" id="caseTitle" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Jurisdiction</label>
+                            <select class="form-select" id="caseJurisdiction">
+                                <option>Texas Southern District - Galveston Division</option>
+                                <option>Texas Northern District</option>
+                                <option>Texas Eastern District</option>
+                                <option>Texas Western District</option>
+                                <option>Texas State Court</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Description</label>
+                            <textarea class="form-control" id="caseDescription" rows="3"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="createCase()">Create Case</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Upload Modal -->
+    <div class="modal fade" id="uploadModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content bg-dark">
+                <div class="modal-header">
+                    <h5 class="modal-title">Upload Evidence</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="upload-zone" id="uploadZone">
+                        <i class="fas fa-cloud-upload-alt fa-3x mb-3"></i>
+                        <p>Drag & drop files here or click to browse</p>
+                        <input type="file" id="fileInput" multiple style="display: none;">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Initialize tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl)
+        })
+        
+        function showNewCaseModal() {
+            var modal = new bootstrap.Modal(document.getElementById('newCaseModal'));
+            modal.show();
+        }
+        
+        function showUploadModal() {
+            var modal = new bootstrap.Modal(document.getElementById('uploadModal'));
+            modal.show();
+        }
+        
+        async function createCase() {
+            const title = document.getElementById('caseTitle').value;
+            const jurisdiction = document.getElementById('caseJurisdiction').value;
+            const description = document.getElementById('caseDescription').value;
+            
+            const response = await fetch('/api/cases', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({title, jurisdiction, description})
+            });
+            
+            if (response.ok) {
+                location.reload();
+            }
+        }
+        
+        // Upload handling
+        document.getElementById('uploadZone').addEventListener('click', () => {
+            document.getElementById('fileInput').click();
+        });
+        
+        document.getElementById('fileInput').addEventListener('change', async (e) => {
+            const files = e.target.files;
+            if (files.length > 0) {
+                const caseSelect = document.getElementById('caseSelect');
+                const caseId = caseSelect ? caseSelect.value : null;
+                
+                if (!caseId) {
+                    alert('Please select or create a case first!');
+                    return;
+                }
+                
+                // Upload each file
+                for (const file of files) {
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    
+                    try {
+                        const response = await fetch(`/api/cases/${caseId}/evidence`, {
+                            method: 'POST',
+                            body: formData
+                        });
+                        
+                        if (response.ok) {
+                            const evidence = await response.json();
+                            console.log('Uploaded:', evidence);
+                            alert(`File "${file.name}" uploaded successfully!`);
+                            // Refresh evidence list
+                            loadEvidence(caseId);
+                        } else {
+                            alert('Upload failed: ' + response.statusText);
+                        }
+                    } catch (err) {
+                        alert('Upload error: ' + err.message);
+                    }
+                }
+            }
+        });
+        
+        // Load evidence for case
+        async function loadEvidence(caseId) {
+            try {
+                const response = await fetch(`/api/cases/${caseId}/evidence`);
+                const evidence = await response.json();
+                console.log('Evidence:', evidence);
+                // Update UI if needed
+            } catch (e) {
+                console.log('No evidence yet');
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ case.title }} - Case Detail</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #3498db;
+            --accent: #e74c3c;
+            --success: #27ae60;
+            --warning: #f39c12;
+            --dark: #1a252f;
+            --light: #ecf0f1;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--dark);
+            color: var(--light);
+        }
+        
+        .sidebar {
+            min-height: 100vh;
+            background: var(--primary);
+        }
+        
+        .card {
+            background: #2c3e50;
+            border: none;
+            border-radius: 12px;
+        }
+        
+        .nav-tabs {
+            border-bottom: 2px solid rgba(255,255,255,0.1);
+        }
+        
+        .nav-tabs .nav-link {
+            color: var(--light);
+            border: none;
+            padding: 15px 20px;
+        }
+        
+        .nav-tabs .nav-link.active {
+            background: transparent;
+            color: var(--secondary);
+            border-bottom: 3px solid var(--secondary);
+        }
+        
+        .fact-card {
+            background: rgba(0,0,0,0.2);
+            border-left: 3px solid var(--secondary);
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .violation-card {
+            background: rgba(231, 76, 60, 0.1);
+            border-left: 3px solid var(--accent);
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .agent-item {
+            background: rgba(0,0,0,0.2);
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+        
+        .timeline-event {
+            position: relative;
+            padding-left: 30px;
+            margin-bottom: 20px;
+        }
+        
+        .timeline-event::before {
+            content: '';
+            position: absolute;
+            left: 8px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--secondary);
+        }
+        
+        .timeline-event::after {
+            content: '';
+            position: absolute;
+            left: 3px;
+            top: 5px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--secondary);
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <nav class="col-md-2 d-none d-md-block sidebar p-3">
+                <div class="text-center mb-4">
+                    <a href="/dashboard" class="text-light text-decoration-none">
+                        <h4><i class="fas fa-gavel"></i> Litigator</h4>
+                    </a>
+                </div>
+                
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard">
+                            <i class="fas fa-home"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard/chat">
+                            <i class="fas fa-comments"></i> Chat with Bob
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard/devil-advocate">
+                            <i class="fas fa-user-secret"></i> Devil's Advocate
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+            
+            <!-- Main Content -->
+            <main class="col-md-10 ms-sm-auto p-4">
+                <!-- Header -->
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h2>{{ case.title }}</h2>
+                        <p class="text-muted mb-0">
+                            <span class="badge bg-secondary">{{ case.id }}</span>
+                            <span class="badge bg-info">{{ case.jurisdiction }}</span>
+                            <span class="badge bg-success">{{ case.status }}</span>
+                        </p>
+                    </div>
+                    <div>
+                        <button class="btn btn-outline-light" onclick="showAddFactModal()">
+                            <i class="fas fa-plus"></i> Add Fact
+                        </button>
+                        <button class="btn btn-outline-light" onclick="showAddViolationModal()">
+                            <i class="fas fa-exclamation-triangle"></i> Add Violation
+                        </button>
+                        <a href="/dashboard/chat?case={{ case_id }}" class="btn btn-primary">
+                            <i class="fas fa-comments"></i> Chat About This Case
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Tabs -->
+                <ul class="nav nav-tabs mb-4" role="tablist">
+                    <li class="nav-item">
+                        <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#facts">
+                            <i class="fas fa-list-alt me-2"></i>Facts ({{ case.facts|length }})
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#violations">
+                            <i class="fas fa-exclamation-circle me-2"></i>Violations ({{ case.violations|length }})
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#research">
+                            <i class="fas fa-search me-2"></i>Research
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#documents">
+                            <i class="fas fa-file-alt me-2"></i>Documents
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#team">
+                            <i class="fas fa-users me-2"></i>AI Team
+                        </button>
+                    </li>
+                </ul>
+                
+                <!-- Tab Content -->
+                <div class="tab-content">
+                    <!-- Facts Tab -->
+                    <div class="tab-pane fade show active" id="facts">
+                        {% if case.facts %}
+                        {% for fact in case.facts %}
+                        <div class="fact-card">
+                            <div class="d-flex justify-content-between">
+                                <strong>Fact #{{ loop.index }}</strong>
+                                <span>
+                                    {% if fact.verified %}
+                                    <span class="badge bg-success">Verified</span>
+                                    {% else %}
+                                    <span class="badge bg-warning">Pending</span>
+                                    {% endif %}
+                                </span>
+                            </div>
+                            <p class="mb-0 mt-2">{{ fact.content }}</p>
+                            <small class="text-muted">{{ fact.created_at }}</small>
+                        </div>
+                        {% endfor %}
+                        {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-clipboard-list fa-3x text-muted mb-3"></i>
+                            <p>No facts added yet. Add facts about your case to help the AI team research and draft documents.</p>
+                            <button class="btn btn-primary" onclick="showAddFactModal()">
+                                <i class="fas fa-plus"></i> Add First Fact
+                            </button>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Violations Tab -->
+                    <div class="tab-pane fade" id="violations">
+                        {% if case.violations %}
+                        {% for violation in case.violations %}
+                        <div class="violation-card">
+                            <div class="d-flex justify-content-between">
+                                <strong>{{ violation.title }}</strong>
+                                <span class="badge bg-{{ 'success' if violation.research_status == 'verified' else 'warning' }}">
+                                    {{ violation.research_status }}
+                                </span>
+                            </div>
+                            <p class="mb-0 mt-2">{{ violation.description }}</p>
+                            {% if violation.suggested_statute %}
+                            <small class="text-muted">Suggested statute: {{ violation.suggested_statute }}</small>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                        {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-exclamation-triangle fa-3x text-muted mb-3"></i>
+                            <p>No violations added. Add alleged violations to trigger research.</p>
+                            <button class="btn btn-primary" onclick="showAddViolationModal()">
+                                <i class="fas fa-plus"></i> Add Violation
+                            </button>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Research Tab -->
+                    <div class="tab-pane fade" id="research">
+                        <div class="card p-4">
+                            <h5>Request Research</h5>
+                            <p class="text-muted">The Researcher agent will find relevant statutes and case law.</p>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="researchQuery" 
+                                       placeholder="e.g., 42 U.S.C. § 1983 qualified immunity">
+                                <button class="btn btn-primary" onclick="requestResearch()">
+                                    <i class="fas fa-search"></i> Research
+                                </button>
+                            </div>
+                        </div>
+                        
+                        {% if case.research_results %}
+                        <div class="mt-4">
+                            <h5>Research Results</h5>
+                            {% for result in case.research_results %}
+                            <div class="card p-3 mb-2">
+                                <strong>{{ result.query }}</strong>
+                                <span class="badge bg-secondary float-end">{{ result.status }}</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Documents Tab -->
+                    <div class="tab-pane fade" id="documents">
+                        <div class="card p-4">
+                            <h5>Generate Document</h5>
+                            <p class="text-muted">The Drafter agent will create court-ready documents.</p>
+                            <div class="mb-3">
+                                <label class="form-label">Document Type</label>
+                                <select class="form-select" id="documentType">
+                                    <option>Complaint</option>
+                                    <option>Motion to Dismiss</option>
+                                    <option>Motion for Summary Judgment</option>
+                                    <option>Response to Motion</option>
+                                    <option>Discovery Request</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Description</label>
+                                <textarea class="form-control" id="documentDescription" rows="3"
+                                          placeholder="Describe what this document should contain..."></textarea>
+                            </div>
+                            <button class="btn btn-primary" onclick="generateDocument()">
+                                <i class="fas fa-pen"></i> Generate Draft
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Team Tab -->
+                    <div class="tab-pane fade" id="team">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h5>Available Agents</h5>
+                                <div class="agent-item">
+                                    <strong><i class="fas fa-coordinator me-2"></i>Coordinator</strong>
+                                    <p class="mb-0 text-muted">Orchestrates research → analysis → drafting</p>
+                                </div>
+                                <div class="agent-item">
+                                    <strong><i class="fas fa-search me-2"></i>Researcher</strong>
+                                    <p class="mb-0 text-muted">Finds relevant statutes and case law</p>
+                                </div>
+                                <div class="agent-item">
+                                    <strong><i class="fas fa-gavel me-2"></i>Drafter</strong>
+                                    <p class="mb-0 text-muted">Creates court-ready documents</p>
+                                </div>
+                                <div class="agent-item">
+                                    <strong><i class="fas fa-balance-scale me-2"></i>Compliance Reviewer</strong>
+                                    <p class="mb-0 text-muted">Checks for sanction risks</p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card p-3">
+                                    <h5><i class="fas fa-robot me-2"></i>Chat with Bob</h5>
+                                    <p>Need to talk through your case? Bob is here to help.</p>
+                                    <a href="/dashboard/chat?case={{ case_id }}" class="btn btn-primary">
+                                        <i class="fas fa-comments"></i> Open Chat
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+    
+    <!-- Add Fact Modal -->
+    <div class="modal fade" id="addFactModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content bg-dark">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Fact</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Fact Content</label>
+                        <textarea class="form-control" id="factContent" rows="4" 
+                                  placeholder="Enter a factual statement about your case..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="addFact()">Add Fact</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Add Violation Modal -->
+    <div class="modal fade" id="addViolationModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content bg-dark">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Violation</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Violation Title</label>
+                        <input type="text" class="form-control" id="violationTitle" 
+                               placeholder="e.g., Excessive Force">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea class="form-control" id="violationDescription" rows="4"
+                                  placeholder="Describe the alleged violation..."></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Suggested Statute (optional)</label>
+                        <input type="text" class="form-control" id="violationStatute"
+                               placeholder="e.g., 42 U.S.C. § 1983">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" onclick="addViolation()">Add Violation</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const caseId = "{{ case_id }}";
+        
+        function showAddFactModal() {
+            new bootstrap.Modal(document.getElementById('addFactModal')).show();
+        }
+        
+        function showAddViolationModal() {
+            new bootstrap.Modal(document.getElementById('addViolationModal')).show();
+        }
+        
+        async function addFact() {
+            const content = document.getElementById('factContent').value;
+            if (!content) return;
+            
+            const response = await fetch(`/api/cases/${caseId}/facts`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    case_id: caseId,
+                    content: content,
+                    verified: false
+                })
+            });
+            
+            if (response.ok) {
+                location.reload();
+            }
+        }
+        
+        async function addViolation() {
+            const title = document.getElementById('violationTitle').value;
+            const description = document.getElementById('violationDescription').value;
+            const statute = document.getElementById('violationStatute').value;
+            
+            if (!title || !description) return;
+            
+            const response = await fetch(`/api/cases/${caseId}/violations`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    case_id: caseId,
+                    title: title,
+                    description: description,
+                    suggested_statute: statute || null
+                })
+            });
+            
+            if (response.ok) {
+                location.reload();
+            }
+        }
+        
+        async function requestResearch() {
+            const query = document.getElementById('researchQuery').value;
+            if (!query) return;
+            
+            const response = await fetch(`/api/cases/${caseId}/research`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    case_id: caseId,
+                    query: query
+                })
+            });
+            
+            if (response.ok) {
+                alert('Research request queued! The Researcher agent will analyze your case.');
+            }
+        }
+        
+        async function generateDocument() {
+            const docType = document.getElementById('documentType').value;
+            const description = document.getElementById('documentDescription').value;
+            
+            if (!description) {
+                alert('Please describe what the document should contain.');
+                return;
+            }
+            
+            alert('Document generation requested! The Drafter agent will create a draft.');
+        }
+    </script>
+</body>
+</html>

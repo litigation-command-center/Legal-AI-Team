@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Devil's Advocate - Safe Space</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --accent: #e74c3c;
+            --primary: #2c3e50;
+            --dark: #1a252f;
+            --light: #ecf0f1;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a252f 0%, #2c3e50 100%);
+            color: var(--light);
+            min-height: 100vh;
+        }
+        
+        .devil-header {
+            background: linear-gradient(135deg, var(--accent) 0%, #c0392b 100%);
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .chat-area {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .message {
+            padding: 15px 20px;
+            border-radius: 18px;
+            margin-bottom: 15px;
+            max-width: 80%;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .message-user {
+            background: var(--accent);
+            margin-left: auto;
+            border-bottom-right-radius: 4px;
+        }
+        
+        .message-bob {
+            background: var(--primary);
+            border: 1px solid var(--accent);
+            border-bottom-left-radius: 4px;
+        }
+        
+        .message-system {
+            background: rgba(231, 76, 60, 0.2);
+            border: 1px solid var(--accent);
+            text-align: center;
+            max-width: 100%;
+            font-size: 0.9em;
+        }
+        
+        .chat-input {
+            padding: 20px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 0 0 20px 20px;
+        }
+        
+        .chat-input input {
+            background: rgba(0,0,0,0.3);
+            border: 2px solid var(--accent);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 30px;
+        }
+        
+        .chat-input input:focus {
+            background: rgba(0,0,0,0.4);
+            box-shadow: 0 0 0 2px var(--accent);
+        }
+        
+        .chat-input button {
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            background: var(--accent);
+            border: none;
+        }
+        
+        .warning-badge {
+            background: var(--accent);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.8em;
+        }
+        
+        .stored-idea {
+            background: rgba(0,0,0,0.3);
+            border-left: 3px solid var(--accent);
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 0 10px 10px 0;
+        }
+        
+        .idea-tag {
+            display: inline-block;
+            background: var(--accent);
+            padding: 3px 10px;
+            border-radius: 15px;
+            font-size: 0.75em;
+            margin-right: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="devil-header">
+        <h2><i class="fas fa-user-secret"></i> Devil's Advocate</h2>
+        <p class="mb-0">Safe space - nothing gets swept under the rug</p>
+        <span class="warning-badge"><i class="fas fa-lock"></i> Private & Confidential</span>
+    </div>
+    
+    <div class="chat-area">
+        <div class="message message-system">
+            <i class="fas fa-shield-alt me-2"></i>
+            <strong>CONFIDENTIAL SPACE</strong><br>
+            This is your safe space to discuss anything about your case:
+            <ul class="text-start mb-0 mt-2">
+                <li>All emotional context is allowed</li>
+                <li>Nothing gets filtered or dismissed</li>
+                <li>Everything is preserved because it might be useful</li>
+                <li>Nothing enters the actual case file unless you explicitly move it</li>
+            </ul>
+        </div>
+        
+        <div class="chat-messages" id="chatMessages" style="max-height: 60vh; overflow-y: auto;">
+            <div class="message message-bob">
+                <div class="d-flex align-items-start">
+                    <div style="width: 40px; height: 40px; background: #e74c3c; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 10px;">
+                        <i class="fas fa-user-secret"></i>
+                    </div>
+                    <div>
+                        <strong>Bob (Devil's Advocate Mode)</strong><br>
+                        <br>
+                        Alright, this is the zone. No filters, no judgment, no "that's not relevant."
+                        <br><br>
+                        Sometimes you just need to vent. Sometimes you need to explore a wild theory. 
+                        Sometimes you need to rage about something unfair.
+                        <br><br>
+                        I'm here for all of it.
+                        <br><br>
+                        <em>What brought you here today?</em>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Stored Ideas Section -->
+        <div class="mt-4">
+            <h5><i class="fas fa-lightbulb"></i> Stored Ideas & Notes</h5>
+            <div id="storedIdeas">
+                <p class="text-muted small">Ideas you bank for later will appear here...</p>
+            </div>
+        </div>
+        
+        <!-- Input -->
+        <div class="chat-input">
+            <form id="chatForm" class="d-flex gap-2">
+                <input type="text" class="form-control" id="messageInput" 
+                       placeholder="Get it off your chest... (nothing leaves this space)" 
+                       autocomplete="off">
+                <button type="submit" class="btn btn-danger">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </form>
+            <div class="d-flex gap-2 mt-3">
+                <button class="btn btn-outline-light btn-sm" onclick="setMode('vent')">
+                    <i class="fas fa-bomb"></i> Just Venting
+                </button>
+                <button class="btn btn-outline-light btn-sm" onclick="setMode('idea')">
+                    <i class="fas fa-lightbulb"></i> Bank This Idea
+                </button>
+                <button class="btn btn-outline-light btn-sm" onclick="setMode('question')">
+                    <i class="fas fa-question"></i> Explore Question
+                </button>
+                <button class="btn btn-outline-light btn-sm" onclick="window.location.href='/dashboard/chat'">
+                    <i class="fas fa-door-open"></i> Exit to Main Chat
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentMode = 'question';
+        const chatMessages = document.getElementById('chatMessages');
+        const chatForm = document.getElementById('chatForm');
+        const messageInput = document.getElementById('messageInput');
+        
+        function setMode(mode) {
+            currentMode = mode;
+            const placeholders = {
+                'vent': 'Get it all out...',
+                'idea': 'What idea are you banking?',
+                'question': 'What do you want to explore?'
+            };
+            messageInput.placeholder = placeholders[mode];
+        }
+        
+        function addMessage(content, isUser = true, isSystem = false) {
+            const div = document.createElement('div');
+            div.className = `message ${isUser ? 'message-user' : 'message-bob'}`;
+            
+            if (isSystem) {
+                div.className = 'message message-system';
+                div.innerHTML = content;
+            } else {
+                div.innerHTML = content;
+            }
+            
+            chatMessages.appendChild(div);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+        
+        async function sendMessage() {
+            const message = messageInput.value.trim();
+            if (!message) return;
+            
+            // Add user message with mode indicator
+            const modeLabels = {
+                'vent': '🔴 Venting',
+                'idea': '💡 Idea',
+                'question': '❓ Exploring'
+            };
+            
+            addMessage(`<em>${modeLabels[currentMode]}</em><br>${message}`, true);
+            messageInput.value = '';
+            
+            // Simulated Bob response for Devil's Advocate mode
+            setTimeout(() => {
+                let response = '';
+                
+                if (currentMode === 'vent') {
+                    response = `Captured. I hear you. That frustration is valid.
+                    <br><br>
+                    Here's the deal: when you're ready to translate this into something actionable, we'll look at the legal angles. But right now? You needed to say it. It's logged.`;
+                } else if (currentMode === 'idea') {
+                    response = `Banked. 📝
+                    <br><br>
+                    I've saved this idea to your notes. We can revisit it when we're building your strategy. Sometimes the wildest ideas have the brightest corners.`;
+                } else {
+                    response = `Interesting angle. Let me think through this with you...
+                    <br><br>
+                    ${message.slice(0, 100)}...
+                    <br><br>
+                    Let's explore this further. What specifically made you think of this?`;
+                }
+                
+                addMessage(response, false);
+            }, 500);
+        }
+        
+        chatForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            sendMessage();
+        });
+        
+        messageInput.focus();
+    </script>
+</body>
+</html>
